@@ -2,7 +2,7 @@ import { AppNode } from "@/types/appNode";
 import { Edge } from "@xyflow/react";
 import { TaskRegistry } from "./task/registry";
 import { TaskType } from "@/types/task";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
 
 // Helper to sort nodes in execution order
 function topologicalSort(nodes: AppNode[], edges: Edge[]): AppNode[] {
@@ -48,6 +48,7 @@ function topologicalSort(nodes: AppNode[], edges: Edge[]): AppNode[] {
 
   return result;
 }
+
 // Execute a single task
 async function executeTask(task: AppNode, inputs: any, browser?: puppeteer.Browser) {
   const taskType = task.data.type;
@@ -59,11 +60,28 @@ async function executeTask(task: AppNode, inputs: any, browser?: puppeteer.Brows
 
   switch (taskType) {
     case TaskType.LAUNCH_BROWSER:
-      const url = task.data.inputs?.["Website Url"] || "https://www.example.com";
-      const browser = await puppeteer.launch({ headless: true });
-      const page = await browser.newPage();
-      await page.goto(url, { waitUntil: 'networkidle0' });
-      return { browser, page };
+      try {
+        const url = task.data.inputs?.["Website Url"] || "https://www.example.com";
+        
+        // Use an existing Chrome installation
+        const browser = await puppeteer.launch({ 
+          headless: true,
+          executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', // Path to Chrome on macOS
+          args: [
+            '--no-sandbox', 
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage'
+          ],
+          ignoreHTTPSErrors: true
+        });
+        
+        const page = await browser.newPage();
+        await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
+        return { browser, page };
+      } catch (error) {
+        console.error("Browser launch error:", error);
+        throw new Error(`Failed to launch browser: ${error.message}`);
+      }
 
     case TaskType.PAGE_TO_HTML:
       const html = await inputs.page.content();
