@@ -1,24 +1,38 @@
 "use client";
 import { Workflow } from "@prisma/client";
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import FlowEditor from "./FlowEditor";
 import Topbar from "@/app/workflow/_components/topbar/Topbar";
 import TaskMenu from "./TaskMenu";
 
 function Editor({ workflow }: { workflow: Workflow }) {
+  const [definition, setDefinition] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      const parsedDefinition = JSON.parse(workflow.definition);
+      setDefinition(parsedDefinition);
+    } catch (error) {
+      console.error("Failed to parse workflow definition:", error);
+      setDefinition({ nodes: [], edges: [] });
+    }
+  }, [workflow.definition]);
+
+  if (!definition) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <ReactFlowProvider>
-      <div className="flex flex-col h-full w-full overflow-hidden">
-        <Topbar
-          title="Workflow editor"
-          subtitle={workflow.name}
-          workflowId={workflow.id}
-        />
-        <section className="flex h-full overflow-auto">
+      <div className="flex flex-col h-screen">
+        <Topbar workflow={workflow} />
+        <div className="flex flex-1 overflow-hidden">
           <TaskMenu />
-          <FlowEditor workflow={workflow} />
-        </section>
+          <div className="flex-1">
+            <FlowEditor workflow={workflow} />
+          </div>
+        </div>
       </div>
     </ReactFlowProvider>
   );

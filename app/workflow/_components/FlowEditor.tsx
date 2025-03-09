@@ -13,7 +13,7 @@ import {
   useNodesState,
   useReactFlow,
 } from "@xyflow/react";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 // Inside app/layout.tsx (for Next.js 13+ using App Router) OR pages/_app.tsx (for Pages Router)
 import "@xyflow/react/dist/style.css";
 import { CreateFlowNode } from "@/lib/workflow/createFlowNode";
@@ -30,25 +30,31 @@ const edgeTypes = {
   default: DeleteableEdge,
 };
 
-const snapGrid: [number, number] = [100, 100];
-const fitViewOptions = { padding: 0.1 };
+const snapGrid: [number, number] = [20, 20];
+const fitViewOptions = { padding: 0.2 };
 
-function FlowEditor({ workflow }: { workflow: Workflow }) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<AppNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const { setViewport, screenToFlowPosition } = useReactFlow();
+interface FlowEditorProps {
+  workflow: Workflow;
+}
+
+function FlowEditor({ workflow }: FlowEditorProps) {
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [definition, setDefinition] = useState<any>(null);
 
   useEffect(() => {
     try {
-      const flow = JSON.parse(workflow.definition);
-      if (!flow) return;
-      setNodes(flow.nodes || []);
-      setEdges(flow.edges || []);
-      if (!flow.viewport) return;
-      const { x = 0, y = 0, zoom = 1 } = flow.viewport;
-      setViewport({ x, y, zoom });
-    } catch (error) {}
-  }, [workflow.definition, setEdges, setNodes, setViewport]);
+      const parsedDefinition = JSON.parse(workflow.definition);
+      setDefinition(parsedDefinition);
+      setNodes(parsedDefinition.nodes || []);
+      setEdges(parsedDefinition.edges || []);
+    } catch (error) {
+      console.error("Failed to parse workflow definition:", error);
+      setDefinition({ nodes: [], edges: [] });
+      setNodes([]);
+      setEdges([]);
+    }
+  }, [workflow.definition, setNodes, setEdges]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -69,30 +75,33 @@ function FlowEditor({ workflow }: { workflow: Workflow }) {
     setNodes((nds) => nds.concat(newNode));
   }, []);
 
-  const onConnect = useCallback((connection: Connection) => {
-    setEdges((eds) => addEdge({ ...connection, animated: true }, eds));
-  }, []);
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      setEdges((eds) => addEdge(connection, eds));
+    },
+    [setEdges]
+  );
+
   return (
-    <main className="h-full w-full">
+    <div className="h-full w-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        // snapToGrid={true}
-        // snapGrid={snapGrid}
+        snapToGrid={true}
+        snapGrid={snapGrid}
         fitView
         fitViewOptions={fitViewOptions}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
-        onConnect={onConnect}
+        className="bg-background"
       >
-        <Controls position="top-left" />
-        <Background variant={BackgroundVariant.Dots} gap={12} size={2} />
+        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+        <Controls />
       </ReactFlow>
-    </main>
+    </div>
   );
 }
 

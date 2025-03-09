@@ -1,44 +1,49 @@
 "use client";
 
-import { UpdateWorkFlow } from "@/actions/workflows/updateWorkflow";
 import { Button } from "@/components/ui/button";
-import { useMutation } from "@tanstack/react-query";
-import { useReactFlow } from "@xyflow/react";
-import { CheckIcon } from "lucide-react";
-import React from "react";
+import { UpdateWorkFlow } from "@/actions/workflows/updateWorkflow";
+import { SaveIcon } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { useReactFlow } from "@xyflow/react";
+import { Workflow } from "@prisma/client";
 
-function SaveBtn({ workflowId }: { workflowId: string }) {
-  const { toObject } = useReactFlow();
+export default function SaveBtn({ workflow }: { workflow: Workflow }) {
+  const [isSaving, setIsSaving] = useState(false);
+  const { getNodes, getEdges } = useReactFlow();
 
-  const saveMutation = useMutation({
-    mutationFn: UpdateWorkFlow,
-    onSuccess: () => {
-      toast.success("Flow saved successfully", { id: "save-workflow" });
-    },
-    onError: () => {
-      toast.error("Something went wrong", { id: "save-workflow" });
-    },
-  });
+  const handleSave = async () => {
+    setIsSaving(true);
+    const toastId = workflow.id;
+    
+    try {
+      toast.loading("Saving workflow...", { id: toastId });
+      
+      const nodes = getNodes();
+      const edges = getEdges();
+      
+      await UpdateWorkFlow({
+        id: workflow.id,
+        definition: JSON.stringify({ nodes, edges }),
+      });
+      
+      toast.success("Workflow saved successfully!", { id: toastId });
+    } catch (error) {
+      console.error("Failed to save workflow:", error);
+      toast.error(`Failed to save: ${error instanceof Error ? error.message : String(error)}`, { id: toastId });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
-    <Button
-      disabled={saveMutation.isPending}
-      variant={"outline"}
+    <Button 
+      onClick={handleSave} 
+      disabled={isSaving}
       className="flex items-center gap-2"
-      onClick={() => {
-        const workflowDefinition = JSON.stringify(toObject());
-        toast.loading("Saving workflow...", { id: "save-workflow" });
-        saveMutation.mutate({
-          id: workflowId,
-          definition: workflowDefinition,
-        });
-      }}
     >
-      <CheckIcon size={16} className="stroke-green-400" />
-      Save
+      <SaveIcon size={16} />
+      {isSaving ? "Saving..." : "Save"}
     </Button>
   );
 }
-
-export default SaveBtn;

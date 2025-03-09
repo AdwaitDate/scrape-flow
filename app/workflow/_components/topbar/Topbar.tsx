@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import SaveBtn from "./SaveBtn";
+import RunBtn from "./RunBtn";
+import { Workflow } from "@prisma/client";
 
 interface Props {
-  title: string;
-  subtitle?: string;
-  workflowId: string;
+  workflow: Workflow;
 }
 
-function Topbar({ title, subtitle, workflowId }: Props) {
+function Topbar({ workflow }: Props) {
   const router = useRouter();
 
   return (
@@ -23,14 +23,15 @@ function Topbar({ title, subtitle, workflowId }: Props) {
           </Button>
         </TooltipWrapper>
         <div className="truncate">
-          <p className="font-bold truncate">{title}</p>
-          {subtitle && (
-            <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+          <p className="font-bold truncate">{workflow.name}</p>
+          {workflow.description && (
+            <p className="text-xs text-muted-foreground truncate">{workflow.description}</p>
           )}
         </div>
       </div>
       <div className="flex gap-1 flex-1 justify-end">
-        <SaveBtn workflowId={workflowId} />
+        <RunBtn />
+        <SaveBtn workflow={workflow} />
       </div>
     </header>
   );
