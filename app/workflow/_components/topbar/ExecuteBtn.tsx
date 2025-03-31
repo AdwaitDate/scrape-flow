@@ -5,7 +5,7 @@ import { PlayIcon } from "lucide-react";
 import React from "react";
 
 function ExecuteBtn({ workflowId }: { workflowId: string }) {
-  const generate = useExecutionPlan;
+  const generate = useExecutionPlan();
   return (
     <Button
       variant={"outline"}
