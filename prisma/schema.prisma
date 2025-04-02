@@ -55,7 +55,7 @@ model ExecutionPhase {
   completedAt         DateTime?
   inputs              String?
   outputs             String?
-  creditsCost         Int?
+  creditsConsumed         Int?
 
   workflowExecutionId String  // Correct foreign key field
   execution           WorkflowExecution @relation(fields: [workflowExecutionId], references: [id], onDelete: Cascade)
