@@ -9,6 +9,8 @@ import { TaskRegistry } from "./task/registry";
 import { boolean } from "zod";
 import { ExecutorRegistry } from "./executor/registry";
 import { Enviornment, ExecutionEnvironment } from "@/types/executor";
+import { TaskParamType } from "@/types/task";
+import { Browser, Page } from "puppeteer";
 
 
 export async function ExecuteWorkflow(executionId:string) {
@@ -41,7 +43,7 @@ export async function ExecuteWorkflow(executionId:string) {
     
 
     await finalizeWorkflowExecution(executionId,execution.workflowId,executionFailed,creditsConsumed)
-    //TODO:cleanup envoirnment
+    await cleanupEnvironment(enviornment)
 
     revalidatePath("/workflows/runs")
 }
@@ -123,6 +125,7 @@ async function executeWorkflowPhase(phase:ExecutionPhase,enviornment:Enviornment
         data:{
             status:ExecutionPhaseStatus.RUNNING,
             startedAt,
+            inputs:JSON.stringify(enviornment.phases[node.id].inputs)
         }
     })
 
@@ -134,12 +137,12 @@ async function executeWorkflowPhase(phase:ExecutionPhase,enviornment:Enviornment
     
     //simulation
    const success = await executePhase(phase,node,enviornment)
-
-    await finalizePhase(phase.id,success);
+    const outputs = enviornment.phases[node.id].outputs;
+    await finalizePhase(phase.id,success,outputs);
     return{success}
     
 }
-async function finalizePhase(phaseId:string,success:boolean) {
+async function finalizePhase(phaseId:string,success:boolean,outputs:any) {
     const finialStatus = success ? ExecutionPhaseStatus.COMPLETED : ExecutionPhaseStatus.FAILED;
 
     await prisma.executionPhase.update({
@@ -150,6 +153,7 @@ async function finalizePhase(phaseId:string,success:boolean) {
         data:{
             status:finialStatus,
             completedAt:new Date(),
+            outputs:JSON.stringify(outputs),
         }
     })
     
@@ -175,6 +179,7 @@ function setupEnvironmentForPhase(node:AppNode,enviornment:Enviornment){
 
 
     for(const input of inputs){
+        if(input.type === TaskParamType.BROWSER_INSTANCE) continue;
         const inputValue = node.data.inputs[input.name];
         if(inputValue){
             enviornment.phases[node.id].inputs[input.name] = inputValue;
@@ -184,9 +189,25 @@ function setupEnvironmentForPhase(node:AppNode,enviornment:Enviornment){
         //Get input values from outputs
     }
 }
-function createExecutionEnvironment(node:AppNode,enviornment:Enviornment){
+function createExecutionEnvironment(node:AppNode,enviornment:Enviornment):ExecutionEnvironment<any>{
     return{
         getInput:(name:string)=> enviornment.phases[node.id]?.inputs[name],
+        setOutput:(name:string,value:string)=>{
+            enviornment.phases[node.id].outputs[name] = value;
+        },
 
+        getBrowser:()=> enviornment.browser,
+        setBrowser:(browser:Browser) => (enviornment.browser = browser),
+
+        getPage:() => enviornment.page,
+        setPage:(page:Page) => (enviornment.page = page),
     }
+}
+
+async function cleanupEnvironment(environment:Enviornment) {
+    if(environment.browser){
+        await environment.browser
+        .close()
+        .catch((err)=>console.error("cannot close browser,reason:",err))
+    }    
 }

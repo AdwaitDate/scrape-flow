@@ -2,11 +2,13 @@
 import {  ExecutionEnvironment } from "@/types/executor";
 
 import { LaunchBrowserTask } from "../task/LaunchBrowser";
+import { PageToHtmlTask } from "../task/PageToHtml";
 
-export async function PageToHtmlExecutor(enviornment:ExecutionEnvironment<typeof LaunchBrowserTask>):Promise<boolean> {
+export async function PageToHtmlExecutor(enviornment:ExecutionEnvironment<typeof PageToHtmlTask>):Promise<boolean> {
   try{
-    const websiteUrl = enviornment.getInput("Website Url")
-    console.log("@@WEBSITE URL",websiteUrl);
+    const html = await enviornment.getPage()!.content();
+    // console.log("PAGE HTML",html)
+    enviornment.setOutput("Html",html)
    
    
     return true;
