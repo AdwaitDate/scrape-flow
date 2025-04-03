@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { ExecuteWorkflow } from "@/lib/workflow/executeWorkflow";
 import { FlowToExecutionPlan } from "@/lib/workflow/executionPlan";
 import { TaskRegistry } from "@/lib/workflow/task/registry";
 import { ExecutionPhaseStatus, WorkflowExecutionPlan, WorkflowExecutionStatus, WorkflowExecutionTrigger } from "@/types/workflow";
@@ -81,7 +82,8 @@ export async function RunWorkflow(form:{
     }
 
     
-    console.log("Redirecting to: ", `/workflow/runs/${workflowId}/${execution.id}`);
+    // console.log("Redirecting to: ", `/workflow/runs/${workflowId}/${execution.id}`);
+    ExecuteWorkflow(execution.id);
     redirect(`/workflow/runs/${workflowId}/${execution.id}`);
     
 }
