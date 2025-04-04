@@ -12,6 +12,8 @@ import { Enviornment, ExecutionEnvironment } from "@/types/executor";
 import { TaskParamType } from "@/types/task";
 import { Browser, Page } from "puppeteer";
 import { Edge } from "@xyflow/react";
+import { LogCollector } from "@/types/log";
+import { createLogCollector } from "../log";
 
 
 export async function ExecuteWorkflow(executionId:string) {
@@ -32,12 +34,13 @@ export async function ExecuteWorkflow(executionId:string) {
    await initializeWorkflowExecution(executionId,execution.workflowId);
    await initializePhaseStatuses(execution)
 
-
+   
    let creditsConsumed =0;
-    let executionFailed =false;
-    for(const phase of execution.phases){
+   let executionFailed =false;
+   for(const phase of execution.phases){
+        const logCollector =createLogCollector();
         //TODO:consume credits
-        const phaseExecution = await executeWorkflowPhase(phase,enviornment,edges);
+        const phaseExecution = await executeWorkflowPhase(phase,enviornment,edges,logCollector);
         if(!phaseExecution.success){
             executionFailed = true;
             break;
@@ -113,7 +116,7 @@ async function finalizeWorkflowExecution(executionId:string,workflowId:string,ex
 }
 
 
-async function executeWorkflowPhase(phase:ExecutionPhase,enviornment:Enviornment,edges:Edge[]) {
+async function executeWorkflowPhase(phase:ExecutionPhase,enviornment:Enviornment,edges:Edge[],logCollector:LogCollector) {
     const startedAt = new Date();
     const node = JSON.parse(phase.node) as AppNode;
 
@@ -139,13 +142,13 @@ async function executeWorkflowPhase(phase:ExecutionPhase,enviornment:Enviornment
     //TODO: decrementing user balance
     
     //simulation
-   const success = await executePhase(phase,node,enviornment)
+   const success = await executePhase(phase,node,enviornment,logCollector)
     const outputs = enviornment.phases[node.id].outputs;
-    await finalizePhase(phase.id,success,outputs);
+    await finalizePhase(phase.id,success,outputs,logCollector);
     return{success}
     
 }
-async function finalizePhase(phaseId:string,success:boolean,outputs:any) {
+async function finalizePhase(phaseId:string,success:boolean,outputs:any,logCollector:LogCollector) {
     const finialStatus = success ? ExecutionPhaseStatus.COMPLETED : ExecutionPhaseStatus.FAILED;
 
     await prisma.executionPhase.update({
@@ -157,19 +160,28 @@ async function finalizePhase(phaseId:string,success:boolean,outputs:any) {
             status:finialStatus,
             completedAt:new Date(),
             outputs:JSON.stringify(outputs),
+            logs:{
+                createMany:{
+                    data:logCollector.getAll().map(log=>({
+                        message:log.message,
+                        timestamp:log.timestamp,
+                        logLevel:log.level,
+                    }))
+                }
+            }
         }
     })
     
 }
 
-async function executePhase(phase:ExecutionPhase,node:AppNode,enviornment:Enviornment):Promise<boolean>{
+async function executePhase(phase:ExecutionPhase,node:AppNode,enviornment:Enviornment,logCollector:LogCollector):Promise<boolean>{
     {
         const runFn = ExecutorRegistry[node.data.type];
         if(!runFn){
             return false;
         }
 
-        const executionEnvironment:ExecutionEnvironment<any> = createExecutionEnvironment(node, enviornment)
+        const executionEnvironment:ExecutionEnvironment<any> = createExecutionEnvironment(node, enviornment,logCollector)
 
         return await runFn(executionEnvironment);
     }
@@ -201,7 +213,7 @@ function setupEnvironmentForPhase(node:AppNode,enviornment:Enviornment,edges:Edg
         enviornment.phases[node.id].inputs[input.name]=outputValue
     }
 }
-function createExecutionEnvironment(node:AppNode,enviornment:Enviornment):ExecutionEnvironment<any>{
+function createExecutionEnvironment(node:AppNode,enviornment:Enviornment,LogCollector:LogCollector):ExecutionEnvironment<any>{
     return{
         getInput:(name:string)=> enviornment.phases[node.id]?.inputs[name],
         setOutput:(name:string,value:string)=>{
@@ -213,6 +225,8 @@ function createExecutionEnvironment(node:AppNode,enviornment:Enviornment):Execut
 
         getPage:() => enviornment.page,
         setPage:(page:Page) => (enviornment.page = page),
+
+        log:LogCollector,
     }
 }
 

@@ -13,8 +13,8 @@ export async function PageToHtmlExecutor(enviornment:ExecutionEnvironment<typeof
    
     return true;
 }
-catch(error){
-    console.log(error)
+catch(error:any){
+    enviornment.log.error(error.message)
     return false;
 }
 }
