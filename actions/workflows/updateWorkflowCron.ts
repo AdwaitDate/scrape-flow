@@ -1,0 +1,35 @@
+"use server";
+
+import prisma from "@/lib/prisma";
+import { auth } from "@clerk/nextjs/server";
+// const parser = require("cron-parser");
+import parser from "cron-parser";
+
+
+export async function UpdateWorkflowCron({id,cron}:{id:string,cron:string}) {
+
+    const {userId}=auth();
+        if(!userId){
+            throw new Error("unauthenticated");
+        }
+        
+        try {
+            const interval = parser.parseExpression(cron,{utc:true})
+            return await prisma.workflow.update({
+                where:{
+                    id,
+                    userId
+                },
+                data:{
+                    cron,
+                    nextRunAt:interval.next().toDate()
+                }
+        
+            })
+        } catch (error) {
+            console.error("Invalid Cron Expression",error)
+            throw new Error("Invalid Cron Expression")
+        }
+
+    
+}
