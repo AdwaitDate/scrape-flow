@@ -63,14 +63,17 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
               >
                 {workflow.name}
               </Link>
-              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                Draft
-              </span>
+              {isDraft && (
+                <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                  Draft
+                </span>
+              )}
             </h3>
             <ScheduleSection
               isDraft={isDraft}
               creditsCost={workflow.creditsCost}
               workflowId={workflow.id}
+              cron={workflow.cron}
             />
           </div>
         </div>
@@ -144,10 +147,12 @@ function ScheduleSection({
   isDraft,
   creditsCost,
   workflowId,
+  cron,
 }: {
   isDraft: boolean;
   creditsCost: number;
   workflowId: string;
+  cron: string | null;
 }) {
   if (isDraft) {
     return null;
@@ -155,7 +160,11 @@ function ScheduleSection({
   return (
     <div className="flex items-center gap-2">
       <CornerDownRightIcon className="h-4 w-4 text-muted-foreground" />
-      <SchedulerDialog workflowId={workflowId} />
+      <SchedulerDialog
+        workflowId={workflowId}
+        cron={cron}
+        key={`${cron}-${workflowId}`}
+      />
       <MoveRightIcon className="h-4 w-4 text-muted-foreground" />
       <TooltipWrapper content="Credit Consumption for full run">
         <div className="flex items-center gap-3">
