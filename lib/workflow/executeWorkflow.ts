@@ -119,6 +119,8 @@ async function finalizeWorkflowExecution(executionId:string,workflowId:string,ex
 
 
 async function executeWorkflowPhase(phase:ExecutionPhase,enviornment:Enviornment,edges:Edge[],logCollector:LogCollector,userId:string) {
+
+
     const startedAt = new Date();
     const node = JSON.parse(phase.node) as AppNode;
 
@@ -188,6 +190,7 @@ async function executePhase(phase:ExecutionPhase,node:AppNode,enviornment:Envior
     {
         const runFn = ExecutorRegistry[node.data.type];
         if(!runFn){
+            logCollector.error(`not found executor for${node.data.type}`)
             return false;
         }
 
