@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Flow Scrape
 
-## Getting Started
+This is a highly customizable web scraper built with Next.js 14, PostgreSQL, Prisma, and React Flow. It enables users to create, manage, and execute complex web scraping workflows with a visual, no-code/low-code interface. The scraper comes with advanced features such as AI-based data extraction
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Technologies Used
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Nextjs 14 with server actions
+- React Flow
+- Sqllite with Prisma DB
+- Puppeteer
+- Prisma
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
-## Learn More
+## Features
 
-To learn more about Next.js, take a look at the following resources:
+- Launch Browser
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+  - Initiates a browser instance to begin the web scraping process, enabling interaction with web pages.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+- Page to HTML
 
-## Deploy on Vercel
+  - Extracts the complete HTML content of the current page for detailed analysis and processing.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Extract Text from Element
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+  - Retrieves the text content from a specified HTML element using a given CSS selector.
+
+- Fill Input
+
+  - Automatically fills a specified input field with a desired value, emulating user input.
+
+- Click Element
+
+  - Simulates a click action on a specified HTML element, triggering any associated events or navigation.
+
+- Scroll to Element
+
+  - Scrolls to a specified element on the page, emulating user behavior for dynamic content loading.
+
+- Wait for Element
+
+  - Pauses the workflow until a specified element becomes visible or hidden on the page.
+
+- Extract Data via AI
+
+  - Uses AI to parse HTML content and extract structured data based on a custom prompt, returning JSON output.
+
+- Read JSON
+
+  - Reads and retrieves a specific key or property from a JSON object for use in workflows.
+
+- Build JSON
+
+  - Adds or updates data within an existing JSON object or creates a new one with the specified properties.
+
+- Deliver via Webhook
+
+  - Sends the scraped data to an external API endpoint through a POST request for further processing or storage.
+
+- Navigate to URL
+
+  - Navigates to a specified URL, loading the desired web page for scraping or interaction.
