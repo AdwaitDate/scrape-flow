@@ -6,6 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getStatsCardsValue } from "@/actions/analytics/getStatsCardsValue";
 import StatsCard from "./_components/StatsCards";
 import { CirclePlayIcon, CoinsIcon, WaypointsIcon } from "lucide-react";
+import { getWorkflowExecutionsStats } from "@/actions/analytics/getWorkflowsExecutionStats";
+import ExecutionStatusChart from "./_components/ExecutionStatusChart";
 
 export default function HomePage({
   searchParams,
@@ -29,6 +31,9 @@ export default function HomePage({
       <div className="h-full py-6 flex flex-col gap-4">
         <Suspense fallback={<StatsCardSkeleton />}>
           <StatsCards selectedPeriod={period} />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="w-full h-[300px]" />}>
+          <StatsExecutionStatus period={period} />
         </Suspense>
       </div>
     </div>
@@ -75,4 +80,11 @@ function StatsCardSkeleton() {
       ))}
     </div>
   );
+}
+
+async function StatsExecutionStatus({ period }: { period: Period }) {
+  const data = await getWorkflowExecutionsStats(period);
+
+  // return <ExecutionStatusChart data={data} />;
+  return <ExecutionStatusChart data={data} />;
 }
