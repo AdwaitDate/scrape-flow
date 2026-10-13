@@ -19,3 +19,24 @@ Flow Scrape is a visual web-scraping workflow builder built with Next.js 14, Rea
 - **Extract data via AI** to turn page content into structured JSON.
 - **Read JSON** and **build JSON** to access or assemble workflow data.
 - **Deliver via webhook** to send results to another service with an HTTP POST request.
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 18.17 or newer
+- npm
+
+### Run locally
+
+```bash
+npm install
+cp .env.example .env
+npx prisma generate
+npx prisma migrate dev
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) after the development server starts. The example environment file configures the local SQLite database. Add the provider credentials needed for authentication and AI-assisted workflows to your local `.env` before using those features.
+
+Run `npm run lint` to check the project with ESLint.
